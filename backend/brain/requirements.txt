@@ -1,0 +1,9 @@
+flask
+flask-cors
+gunicorn
+spacy
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers
+Pillow
+
+
