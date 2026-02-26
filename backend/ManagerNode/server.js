@@ -11,13 +11,14 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-
-const PORT = 5050;
+const io = new Server(server,{ cors: { origin: "*" } });
+const cors = require('cors');
+const PORT = process.env.PORT ||5050;
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
-const frontendPath = path.join(__dirname, '../frontend');
+const frontendPath = path.join(__dirname, '../../frontend');
 const frameDir = path.join(__dirname, 'static/frames');
+app.use(cors());
 
 if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
 if (!fs.existsSync(frameDir)) fs.mkdirSync(frameDir, { recursive: true });
@@ -71,9 +72,9 @@ app.post('/upload', rateLimiter,upload.single('video'), (req, res) => {
                 };
 
                 try {
-
-                    const aiResponse = await axios.post('http://localhost:5001/tag', { 
-                        path: fullImagePath,
+                    const imageBase64 = fs.readFileSync(fullImagePath, { encoding: 'base64' });
+                    const aiResponse = await axios.post('https://sameer007123-drone-ai-brain.hf.space/tag', { 
+                        image: imageBase64,
                         droneID: currentData.drone_id,
                         gps: currentData.gps,
                         timestamp: currentData.timestamp
@@ -91,7 +92,7 @@ app.post('/upload', rateLimiter,upload.single('video'), (req, res) => {
                         imageUrl: `/static/frames/${fileName}`
                     };
                     
-
+                    console.log(resultEntry);
                     io.emit('new-frame', resultEntry);
                     // console.log(`Indexed frame ${i}: ${resultEntry.tag}`);
                     console.log(resultEntry);
@@ -115,6 +116,6 @@ app.post('/upload', rateLimiter,upload.single('video'), (req, res) => {
         .save(outputPattern);
 });
 
-server.listen(PORT, () => {
-    console.log(`✅ NRT Drone Indexer System Online at http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
 });
